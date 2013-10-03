@@ -40,14 +40,14 @@
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 /* prim = 1366 x 768 x 3(bpp) x 3(pages) */
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WXGA_PT)
+#if defined(CONFIG_FB_MSM_MIPI_HITACHI_CMD_720P_PT)
 #define MSM_FB_PRIM_BUF_SIZE roundup(768 * 1280 * 4 * 3, 0x10000)
 #else
 #define MSM_FB_PRIM_BUF_SIZE roundup(1920 * 1088 * 4 * 3, 0x10000)
 #endif
 #else
 /* prim = 1366 x 768 x 3(bpp) x 2(pages) */
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WXGA_PT)
+#if defined(CONFIG_FB_MSM_MIPI_HITACHI_CMD_720P_PT)
 #define MSM_FB_PRIM_BUF_SIZE roundup(768 * 1280 * 4 * 2, 0x10000)
 #else
 #define MSM_FB_PRIM_BUF_SIZE roundup(1920 * 1088 * 4 * 2, 0x10000)
@@ -76,7 +76,7 @@
 		MSM_FB_EXT_BUF_SIZE + MSM_FB_WFD_BUF_SIZE, 4096)
 
 #ifdef CONFIG_FB_MSM_OVERLAY0_WRITEBACK
-	#if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WXGA_PT)
+	#if defined(CONFIG_FB_MSM_MIPI_HITACHI_CMD_720P_PT)
 	#define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((768 * 1280 * 3 * 2), 4096)
 	#else
 	#define MSM_FB_OVERLAY0_WRITEBACK_SIZE (0)
@@ -682,7 +682,7 @@ static int hdmi_cec_power(int on)
 	return 0;
 }
 
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WXGA_PT)
+#if defined(CONFIG_FB_MSM_MIPI_HITACHI_CMD_720P_PT)
 static int mipi_lgit_backlight_level(int level, int max, int min)
 {
 #ifdef CONFIG_BACKLIGHT_LM3530
@@ -729,11 +729,11 @@ static char power_setting3[13] = {0xC3, 0x00, 0x88, 0x03, 0x20, 0x01, 0x57, 0x4F
 static char power_setting4[6] =  {0xC4, 0x31, 0x24, 0x11, 0x11, 0x3D};
 static char power_setting5[4] =  {0xC5, 0x3B, 0x3B, 0x03};
 
-#ifdef CONFIG_LGIT_VIDEO_WXGA_CABC
-static char cabc_set0[2] = {0x51, 0xFF};
+#ifdef CONFIG_HITACHI_CMD_720P_CABC
+static char cabc_set0[3] = {0x51, 0xE, 0xFF};
 static char cabc_set1[2] = {0x5E, 0x00}; // CABC MIN
 static char cabc_set2[2] = {0x53, 0x2C};
-static char cabc_set3[2] = {0x55, 0x02};
+static char cabc_set3[2] = {0x55, 0x01};
 static char cabc_set4[6] = {0xC8, 0x22, 0x22, 0x22, 0x33, 0x80};//A-CABC applied
 #endif
 
@@ -754,6 +754,11 @@ static char enter_sleep_power_control_3[2] = {0xC2,0x01};
 static char enter_sleep_power_control_2[2] = {0xC2,0x00};
 
 static char deep_standby[2] = {0xC1,0x02};
+
+static char unknown_set1[5] = {0x2A, 0x00, 0x00, 0x02, 0xCF};
+static char unknown_set2[5] = {0x2B, 0x00, 0x00, 0x04, 0xFF};
+static char unknown_set3[2] = {0x36, 0x00};
+static char unknown_set4[2] = {0x3a, 0x77};
 
 static struct dsi_cmd_desc lgit_power_on_set_1[] = {
 	// Display Initial Set
@@ -793,11 +798,11 @@ static struct dsi_cmd_desc lgit_power_on_set_1[] = {
 	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(power_setting4), power_setting4},
 	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(power_setting5), power_setting5},
 
-#ifdef CONFIG_LGIT_VIDEO_WXGA_CABC
-	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(cabc_set0), cabc_set0},
+#ifdef CONFIG_HITACHI_CMD_720P_CABC
+	{DTYPE_DCS_LWRITE, 1, 0, 0, 0, sizeof(cabc_set0), cabc_set0},
 	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(cabc_set1), cabc_set1},
-	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(cabc_set2), cabc_set2},
-	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(cabc_set3), cabc_set3},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 0, sizeof(cabc_set2), cabc_set2},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 0, sizeof(cabc_set3), cabc_set3},
 	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(cabc_set4), cabc_set4},
 #endif
 };
@@ -810,8 +815,12 @@ static struct dsi_cmd_desc lgit_power_on_set_2[] = {
 static struct dsi_cmd_desc lgit_power_on_set_3[] = {
 	// Power Supply Set
 	{DTYPE_GEN_LWRITE,  1, 0, 0, 0, sizeof(otp_protection), otp_protection},
-	{DTYPE_GEN_LWRITE,  1, 0, 0, 0, sizeof(sleep_out_for_cabc), sleep_out_for_cabc},
+	{DTYPE_DCS_WRITE,  1, 0, 0, 120, sizeof(sleep_out_for_cabc), sleep_out_for_cabc},
 	{DTYPE_GEN_LWRITE,  1, 0, 0, 0, sizeof(gate_output_enabled_by_manual), gate_output_enabled_by_manual},
+	{DTYPE_DCS_LWRITE, 1, 0, 0, 0, sizeof(unknown_set1), unknown_set1},
+	{DTYPE_DCS_LWRITE, 1, 0, 0, 20, sizeof(unknown_set2), unknown_set2},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 20, sizeof(unknown_set3), unknown_set3},
+	{DTYPE_DCS_WRITE1, 1, 0, 0, 0, sizeof(unknown_set4), unknown_set4},
 	{DTYPE_DCS_WRITE,  1, 0, 0, 0, sizeof(display_on), display_on},
 };
 
@@ -842,7 +851,7 @@ static struct msm_panel_common_pdata mipi_lgit_pdata = {
 	.power_off_set_size_1 = ARRAY_SIZE(lgit_power_off_set_1),
 	.power_off_set_size_2 =ARRAY_SIZE(lgit_power_off_set_2),
 
-#ifdef CONFIG_LGIT_VIDEO_WXGA_CABC
+#ifdef CONFIG_HITACHI_CMD_720P_CABC
 	.bl_pwm_disable = lm3530_lcd_backlight_pwm_disable,
 #endif
 	.bl_on_status = lm3530_lcd_backlight_on_status,
@@ -858,7 +867,7 @@ static struct platform_device mipi_dsi_lgit_panel_device = {
 #endif
 
 static struct platform_device *mako_panel_devices[] __initdata = {
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WXGA_PT)
+#if defined(CONFIG_FB_MSM_MIPI_HITACHI_CMD_720P_PT)
 	&mipi_dsi_lgit_panel_device,
 #endif
 #ifdef CONFIG_LCD_KCAL
@@ -886,7 +895,7 @@ void __init apq8064_init_fb(void)
 
 }
 
-#ifdef CONFIG_LGIT_VIDEO_WXGA_CABC
+#ifdef CONFIG_HITACHI_CMD_720P_CABC
 #define PWM_SIMPLE_EN 0xA0
 #define PWM_BRIGHTNESS 0x20
 #endif
@@ -895,7 +904,7 @@ void __init apq8064_init_fb(void)
 static struct backlight_platform_data lm3530_data = {
 
 	.gpio = PM8921_GPIO_PM_TO_SYS(13),
-#ifdef CONFIG_LGIT_VIDEO_WXGA_CABC
+#ifdef CONFIG_HITACHI_CMD_720P_CABC
 	.max_current = 0x17 | PWM_BRIGHTNESS,
 #else
 	.max_current = 0x17,
