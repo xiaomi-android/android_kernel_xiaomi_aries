@@ -114,6 +114,9 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 		return ret;
 	}
 
+	if (mipi_lgit_pdata->power_on_notify)
+		mipi_lgit_pdata->power_on_notify();
+
 	pr_info("%s finished\n", __func__);
 	return 0;
 }
